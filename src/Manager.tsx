@@ -18,17 +18,36 @@ export const Manager = () => {
     if (!itemName.trim() || !folders.current) return;
 
     if (selectedOption === "folder") {
-      dispatch({
-        type: "ADD_FOLDER",
-        payload: {
-          id: v4(),
-          parentId: folders.current.id,
-          name: itemName,
-          parentPath: folders.current.absolutePath,
-          absolutePath: `${folders.current.absolutePath}${itemName}/`,
-          files: [],
-        },
-      });
+      let repetitionFlag;
+
+      folders.all
+        .filter(
+          (fol) =>
+            fol.parentId ===
+            folders.all.find((folder) => folder.id === folders.current.id)?.id
+        )
+        .forEach((fol) =>
+          fol.name === itemName ? (repetitionFlag = true) : null
+        );
+
+      if (repetitionFlag == true) {
+        alert(itemName + " already exists!");
+        return;
+      } else {
+        dispatch({
+          type: "ADD_FOLDER",
+          payload: {
+            id: v4(),
+            parentId: folders.current.id,
+            name: itemName,
+            parentPath: folders.current.absolutePath,
+            absolutePath: `${folders.current.absolutePath}${itemName}/`,
+            files: [],
+          },
+        });
+
+        return;
+      }
     }
 
     if (selectedOption === "file") {
@@ -39,6 +58,7 @@ export const Manager = () => {
           files: [...(folders.current.files as string[]), itemName],
         },
       });
+      return;
     }
 
     setItemName("");
