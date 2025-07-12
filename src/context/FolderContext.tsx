@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useReducer,
+  useState,
   type ActionDispatch,
 } from "react";
 import type { IFolder } from "../types";
@@ -15,6 +16,7 @@ interface IFolderContext {
   };
   dispatch: ActionDispatch<[action: IAction]>;
   getFolders: (id: string) => IFolder[];
+  history: IFolder[];
 }
 
 interface IAction {
@@ -51,25 +53,18 @@ const foldersReducer = (state: IFolderContext["folders"], action: IAction) => {
   }
 };
 
+const rootDir: IFolder = {
+  id: v4(),
+  parentId: "",
+  name: "root",
+  parentPath: "/",
+  absolutePath: "/root/",
+  files: [],
+};
+
 const initialState: IFolderContext["folders"] = {
-  all: [
-    {
-      id: v4(),
-      parentId: "",
-      name: "root",
-      parentPath: "/",
-      absolutePath: "/root/",
-      files: [],
-    },
-  ],
-  current: {
-    id: v4(),
-    parentId: "",
-    name: "root",
-    parentPath: "/",
-    absolutePath: "/root/",
-    files: [],
-  },
+  all: [rootDir],
+  current: rootDir,
 };
 
 export const FolderContext = createContext<IFolderContext | null>(null);
@@ -80,6 +75,7 @@ export const FolderContextProvider = ({
   children: React.ReactNode;
 }) => {
   const [state, dispatch] = useReducer(foldersReducer, initialState);
+  const [history, setHistory] = useState<IFolder[]>([rootDir]);
 
   useEffect(() => {
     dispatch({
@@ -90,21 +86,31 @@ export const FolderContextProvider = ({
     });
   }, [state.all]);
 
+  useEffect(() => {
+    if (state.current.parentId === "") return;
+
+    if (state.current.parentId === history.at(-1)?.id) {
+      setHistory((prev) => [...prev, state.current]);
+    }
+  }, [state.current]);
+
   const getFolders = (id: string) => {
     return state.all.filter((folder) => folder.parentId === id);
   };
 
   return (
-    <FolderContext.Provider value={{ folders: state, dispatch, getFolders }}>
+    <FolderContext.Provider
+      value={{ folders: state, dispatch, getFolders, history }}
+    >
       {children}
     </FolderContext.Provider>
   );
 };
 
 export const useFolders = () => {
-  const { folders, dispatch, getFolders } = useContext(
+  const { folders, dispatch, getFolders, history } = useContext(
     FolderContext
   ) as IFolderContext;
 
-  return [folders, dispatch, getFolders] as const;
+  return [folders, dispatch, getFolders, history] as const;
 };

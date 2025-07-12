@@ -6,6 +6,7 @@ import { Button } from "./components/Button";
 import { File } from "./components/File";
 import { useFolders } from "./context/FolderContext";
 import { v4 } from "uuid";
+import { Breadcrumb } from "./components/Breadcrumb";
 
 export const Manager = () => {
   const [folders, dispatch, getFolders] = useFolders();
@@ -24,7 +25,7 @@ export const Manager = () => {
           parentId: folders.current.id,
           name: itemName,
           parentPath: folders.current.absolutePath,
-          absolutePath: `${folders.current.absolutePath}/${itemName}/`,
+          absolutePath: `${folders.current.absolutePath}${itemName}/`,
           files: [],
         },
       });
@@ -49,9 +50,12 @@ export const Manager = () => {
         <div className="w-full h-full flex flex-col justify-start items-start p-8 rounded-xl bg-white">
           {folders.all && (
             <>
-              <h1 className="text-cyan-700/90 text-4xl">
-                {folders.current?.name}
-              </h1>
+              <div className="flex w-full justify-between">
+                <h1 className="text-cyan-700/90 text-4xl">
+                  {folders.current?.name}
+                </h1>
+                {folders.current.parentId === "" ? null : <Breadcrumb />}
+              </div>
               {getFolders(folders.current.id).length == 0 &&
               folders.current?.files?.length == 0 ? (
                 <div className="flex w-full h-full justify-center items-center text-3xl text-cyan-700/60">

@@ -11,7 +11,7 @@ export const Folder: React.FC<IFolderProps> = ({ absolutePath }) => {
     (folder) => folder.absolutePath === absolutePath
   ) as IFolder;
 
-  console.log(folder);
+  //   console.log(folder);
 
   return (
     <div
