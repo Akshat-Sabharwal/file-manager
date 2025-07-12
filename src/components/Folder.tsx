@@ -1,32 +1,24 @@
-import { updateFolder, useFolder } from "../context/FolderContext";
+import { useFolders } from "../context/FolderContext";
 import type { IFolder } from "../types";
 
 interface IFolderProps {
-  name: string;
-  path: string;
+  absolutePath: string;
 }
 
-export const Folder: React.FC<IFolderProps> = ({ name, path }) => {
-  const folder = useFolder({ absolutePath: path }) as IFolder;
+export const Folder: React.FC<IFolderProps> = ({ absolutePath }) => {
+  const [folders, dispatch] = useFolders();
+  const folder = folders.all.find(
+    (folder) => folder.absolutePath === absolutePath
+  ) as IFolder;
 
-  const updateCurrentFolder = () => {
-    updateFolder({
-      absolutePath: folder.absolutePath,
-      updates: { isCurrent: true },
-    });
-
-    updateFolder({
-      absolutePath: (useFolder({ isCurrent: true }) as IFolder).absolutePath,
-      updates: { isCurrent: false },
-    });
-  };
+  console.log(folder);
 
   return (
     <div
       className="w-fit min-w-48 rounded-lg bg-cyan-700 text-white px-4 py-2.5 cursor-pointer"
-      onClick={updateCurrentFolder}
+      onClick={() => dispatch({ type: "SET_CURRENT", payload: folder })}
     >
-      {name}
+      {folder.name}
     </div>
   );
 };

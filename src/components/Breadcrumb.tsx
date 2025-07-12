@@ -1,7 +1,4 @@
-// import { useHistory } from "../context/HistoryContext";
-// import type { IContents } from "../types";
-
-// export const Breadcrumb = ({ currentFolder }: { currentFolder: IContents }) => {
+// export const Breadcrumb = ({ currentFolder }: { currentFolder:  }) => {
 //   const [history, setHistory] = useHistory();
 
 //   return <></>;

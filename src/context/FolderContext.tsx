@@ -1,24 +1,75 @@
 import {
   createContext,
   useContext,
-  useState,
-  type Dispatch,
-  type SetStateAction,
+  useEffect,
+  useReducer,
+  type ActionDispatch,
 } from "react";
 import type { IFolder } from "../types";
+import { v4 } from "uuid";
 
 interface IFolderContext {
-  folders: IFolder[];
-  setFolders: Dispatch<SetStateAction<IFolder[]>>;
+  folders: {
+    all: IFolder[];
+    current: IFolder;
+  };
+  dispatch: ActionDispatch<[action: IAction]>;
+  getFolders: (id: string) => IFolder[];
 }
 
-const rootDir: IFolder = {
-  name: "root",
-  parentPath: "/",
-  absolutePath: "/root/",
-  folders: [],
-  files: [],
-  isCurrent: true,
+interface IAction {
+  type: "ADD_FOLDER" | "UPDATE_FOLDER" | "SET_CURRENT";
+  payload: IFolder;
+}
+
+const foldersReducer = (state: IFolderContext["folders"], action: IAction) => {
+  switch (action.type) {
+    case "ADD_FOLDER":
+      return {
+        ...state,
+        all: [...state.all, action.payload],
+      } as IFolderContext["folders"];
+
+    case "UPDATE_FOLDER":
+      return {
+        ...state,
+        all: state.all.map((folder) =>
+          folder.absolutePath === action.payload.absolutePath
+            ? { ...action.payload }
+            : folder
+        ),
+      } as IFolderContext["folders"];
+
+    case "SET_CURRENT":
+      return {
+        ...state,
+        current: action.payload,
+      } as IFolderContext["folders"];
+
+    default:
+      return state;
+  }
+};
+
+const initialState: IFolderContext["folders"] = {
+  all: [
+    {
+      id: v4(),
+      parentId: "",
+      name: "root",
+      parentPath: "/",
+      absolutePath: "/root/",
+      files: [],
+    },
+  ],
+  current: {
+    id: v4(),
+    parentId: "",
+    name: "root",
+    parentPath: "/",
+    absolutePath: "/root/",
+    files: [],
+  },
 };
 
 export const FolderContext = createContext<IFolderContext | null>(null);
@@ -28,51 +79,32 @@ export const FolderContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [folders, setFolders] = useState<IFolder[]>([rootDir]);
+  const [state, dispatch] = useReducer(foldersReducer, initialState);
+
+  useEffect(() => {
+    dispatch({
+      type: "SET_CURRENT",
+      payload: state.all.find(
+        (folder) => folder.absolutePath === state.current.absolutePath
+      ) as IFolder,
+    });
+  }, [state.all]);
+
+  const getFolders = (id: string) => {
+    return state.all.filter((folder) => folder.parentId === id);
+  };
 
   return (
-    <FolderContext.Provider value={{ folders, setFolders }}>
+    <FolderContext.Provider value={{ folders: state, dispatch, getFolders }}>
       {children}
     </FolderContext.Provider>
   );
 };
 
-export const useFolder = (options?: {
-  absolutePath?: string | null;
-  isCurrent?: boolean;
-}) => {
-  const { folders } = useContext(FolderContext) as IFolderContext;
+export const useFolders = () => {
+  const { folders, dispatch, getFolders } = useContext(
+    FolderContext
+  ) as IFolderContext;
 
-  if (options?.absolutePath != null) {
-    return folders.find(
-      (folder) => folder.absolutePath === options?.absolutePath
-    );
-  }
-
-  if (options?.isCurrent == true) {
-    return folders.find((folder) => folder.isCurrent === true);
-  }
-
-  return folders;
-};
-
-export const updateFolder = (options: {
-  absolutePath: string;
-  updates: Partial<IFolder>;
-}) => {
-  const { setFolders } = useContext(FolderContext) as IFolderContext;
-
-  setFolders((prev) =>
-    prev.map((folder) =>
-      folder.absolutePath === options?.absolutePath
-        ? { ...folder, ...options?.updates }
-        : folder
-    )
-  );
-};
-
-export const addFolder = (folderDetails: IFolder) => {
-  const { setFolders } = useContext(FolderContext) as IFolderContext;
-
-  setFolders((prev) => [...prev, folderDetails]);
+  return [folders, dispatch, getFolders] as const;
 };
