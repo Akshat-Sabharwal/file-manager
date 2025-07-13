@@ -7,7 +7,7 @@ export const Breadcrumb = () => {
 
   return (
     <div className="flex gap-3">
-      {history.map((folder, idx) => (
+      {history.slice(0, -1).map((folder, idx) => (
         <>
           <p
             className="text-2xl text-cyan-700/90 cursor-pointer"
@@ -15,7 +15,7 @@ export const Breadcrumb = () => {
           >
             {folder.name}
           </p>
-          {idx < history.length - 1 ? (
+          {idx < history.length - 2 ? (
             <p className="text-2xl text-cyan-700/90">{">"}</p>
           ) : null}
         </>
